@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Photo Lock Website</title>
+  <style>
+    body { font-family: sans-serif; background: #222; color: #fff; margin: 0; padding: 0; }
+    #main { max-width: 600px; margin: 60px auto; padding: 20px; background: #444; border-radius: 10px; }
+    #photoPreview { display: none; margin: 20px 0; max-width: 90vw; max-height: 70vh; border-radius: 8px; }
+    #lockMsg {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(10,10,20,0.97);
+      color: #fff; z-index: 9999; justify-content:center; align-items:center; font-size: 2em; flex-direction:column;
+    }
+    button, input[type="file"] { font-size: 1em; background:#326; color: #eee; border: none; border-radius:5px; padding:10px 18px; margin-top:20px; cursor:pointer;}
+    button:disabled { opacity: 0.5; cursor:default;}
+  </style>
+</head>
+<body>
+<div id="main">
+  <h2>Photo Lock Website</h2>
+  <p>Upload a photo:</p>
+  <input type="file" accept="image/*" id="photoInput" />
+  <img id="photoPreview" />
+</div>
+
+<div id="lockMsg">
+  <div>🔒 <br>This website is locked.<br>Press <b>R</b> to unlock early.<br>It will auto-unlock in 30 minutes.<br>(You can still leave by powering off the device.)</div>
+</div>
+
+<script>
+const photoInput = document.getElementById('photoInput');
+const photoPreview = document.getElementById('photoPreview');
+const lockMsg = document.getElementById('lockMsg');
+let locked = false;
+let unlockTimeout;
+
+// Handle photo upload and preview
+photoInput.addEventListener('change', function(e){
+  if(e.target.files && e.target.files[0]){
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      photoPreview.src = ev.target.result;
+      photoPreview.style.display = 'block';
+      setTimeout(() => askLockScreen(), 300); // slight delay to show preview
+    };
+    reader.readAsDataURL(e.target.files[0]);
+  }
+});
+
+function askLockScreen() {
+  if(confirm('Allow this website to lock you in? You cannot use other tabs until you unlock or wait for 30 minutes.')){
+    lockScreen();
+    // Try fullscreen for extra screen lock effect
+    if(document.documentElement.requestFullscreen){
+      document.documentElement.requestFullscreen().catch(()=>{});
+    }
+  }
+}
+
+function lockScreen() {
+  locked = true;
+  lockMsg.style.display = 'flex';
+  unlockTimeout = setTimeout(unlockScreen, 30 * 60 * 1000); // 30 minutes
+}
+
+function unlockScreen() {
+  locked = false;
+  lockMsg.style.display = 'none';
+  clearTimeout(unlockTimeout);
+  if(document.fullscreenElement && document.exitFullscreen){
+    document.exitFullscreen();
+  }
+}
+
+document.addEventListener('keydown', function(e){
+  if(locked && (e.key === 'r' || e.key === 'R')){
+    unlockScreen();
+  }
+});
+</script>
+</body>
+</html>
